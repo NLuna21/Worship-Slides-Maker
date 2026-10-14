@@ -125,11 +125,13 @@ const secsOf=s=>fmt?s.secs.flatMap(x=>splitLyrics(x)):s.secs;
 function splitLyrics(raw){const out=[];raw.replace(/\r/g,'').replace(/^[ \t]*[\[(]?\s*(?:verse|chorus|pre-?chorus|bridge|intro|outro|tag|refrain|interlude|instrumental|ending|hook)\s*\d*\s*[\])]?:?[ \t]*$/gim,'').split(/\n\s*\n/).forEach(b=>{const L=b.split('\n').map(cleanLine).filter(Boolean);if(!L.length)return;
  const parts=Math.ceil(L.length/5),bs=Math.floor(L.length/parts),ex=L.length%parts;let i=0;
  for(let p=0;p<parts;p++){const n=bs+(p<ex?1:0);out.push(L.slice(i,i+n).join('\n'));i+=n}});return out}
-function slideHtml(title,text,pt){const c=THEMES[theme];return `<div class="slide" style="background:#${c.bg};color:#${c.fg}"><div class="st" style="color:#${c.ac}">${esc(title)}</div><div class="sb" style="font-size:${((pt||fitPt(text))/7.2).toFixed(2)}cqw">${esc(text)}</div></div>`}
+function slideHtml(title,text,pt){const c=THEMES[theme];return `<div class="slide" style="background:#${c.bg};color:#${c.fg}"><div class="st" style="color:#${c.ac};white-space:nowrap;font-size:${(oneLinePt(title,SLIDE_BODY_W,16,9)/7.2).toFixed(2)}cqw">${esc(title)}</div><div class="sb" style="font-size:${((pt||fitPt(text))/7.2).toFixed(2)}cqw">${esc(text)}</div></div>`}
 
 // ---- auto-fit: choose the largest font size (pt) whose wrapped text fits the box ----
 const _ctx=(()=>{try{const c=document.createElement('canvas').getContext('2d');c.font='100px Arial, Helvetica, sans-serif';return c}catch(e){return null}})();
-const textW=(s,pt)=>(_ctx?_ctx.measureText(s).width:s.length*55)*pt/100;   // Arial is wider than Calibri, so this errs on the safe side
+const textW=(s,pt,bold)=>{let w=s.length*(bold?58:55);if(_ctx){_ctx.font=(bold?'bold ':'')+'100px Arial, Helvetica, sans-serif';w=_ctx.measureText(s).width}return w*pt/100};   // Arial is wider than Calibri, so this errs on the safe side
+// Largest font size (<= max pt) at which `text` fits on ONE line of wIn inches (never below min). Used for song titles.
+const oneLinePt=(text,wIn,max,min=8,bold=true)=>{const w=wIn*72;for(let s=max;s>min;s--){if(textW(text,s,bold)*1.08<=w)return s}return min};
 function wrapCount(line,pt,wPt){if(!line.trim())return 1;let n=1,cur='';for(const w of line.split(' ')){const t=cur?cur+' '+w:w;if(cur&&textW(t,pt)>wPt){n++;cur=w}else cur=t}return n}
 // Prefers one-line-per-lyric-line: wrapping is only allowed once the size drops to `nw` pt or below.
 function fitPt(text,wIn=SLIDE_BODY_W,hIn=SLIDE.bodyH,max=40,min=18,nw=Infinity){const w=wIn*72*.95,h=hIn*72*.95,L=text.split('\n');
@@ -200,7 +202,7 @@ $('#expAdd').onclick=()=>{if(!added.length)return say($('#msg'),'You haven’t a
  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'New Songs');save('new-songs.xlsx',XLSX.write(wb,{bookType:'xlsx',type:'array'}))};
 $('#exp').onclick=async()=>{if(tpl)return exportTpl();const pt=setPt();const p=new PptxGenJS(),c=THEMES[theme];p.layout='LAYOUT_16x9';p.title='Worship Slides';
  set.map(find).forEach(s=>secsOf(s).forEach(x=>{const sl=p.addSlide();sl.background={color:c.bg};
-  sl.addText(s.t,{x:SLIDE.mx,y:SLIDE.titleY,w:SLIDE_BODY_W,h:.5,margin:0,fontSize:16,bold:true,color:c.ac,fontFace:'Calibri'});
+  sl.addText(s.t,{x:SLIDE.mx,y:SLIDE.titleY,w:SLIDE_BODY_W,h:.5,margin:0,wrap:false,fontSize:oneLinePt(s.t,SLIDE_BODY_W,16,9),bold:true,color:c.ac,fontFace:'Calibri'});
   sl.addText(x,{x:SLIDE.mx,y:SLIDE.bodyY,w:SLIDE_BODY_W,h:SLIDE.bodyH,margin:0,fit:'shrink',fontSize:pt,color:c.fg,align:'center',valign:'middle',fontFace:'Calibri'})}));
  try{save('Worship-Slides-'+new Date().toISOString().slice(0,10)+'.pptx',await p.write({outputType:'arraybuffer'}))}catch(e){say($('#msg'),'Could not build slides: '+e.message,1)}};
 </script>
@@ -223,7 +225,7 @@ function fillSlide(xml,vals,opt){const A='http://schemas.openxmlformats.org/draw
  [...doc.getElementsByTagNameNS(A,'p')].forEach(p=>{const runs=[...p.childNodes].filter(n=>n.localName==='r'&&n.namespaceURI===A);if(!runs.length)return;
   const txt=runs.map(r=>(r.getElementsByTagNameNS(A,'t')[0]||{}).textContent||'').join('');if(!/\{\{[^}]+\}\}/.test(txt))return;
   const out=txt.replace(/\{\{\s*([^}]+?)\s*\}\}/g,(m,k)=>{const v=vals[k.toLowerCase()];return v===undefined?m:v});
-  const first=runs[0];let rPr=first.getElementsByTagNameNS(A,'rPr')[0];runs.slice(1).forEach(r=>p.removeChild(r));if(opt&&/\{\{\s*lyrics\s*\}\}/i.test(txt)){if(!rPr){rPr=doc.createElementNS(A,'a:rPr');first.insertBefore(rPr,first.firstChild)}rPr.setAttribute('sz',String(opt.pt*100));fitBox(p,doc,opt.box)}
+  const first=runs[0];let rPr=first.getElementsByTagNameNS(A,'rPr')[0];runs.slice(1).forEach(r=>p.removeChild(r));if(opt&&/\{\{\s*lyrics\s*\}\}/i.test(txt)){if(!rPr){rPr=doc.createElementNS(A,'a:rPr');first.insertBefore(rPr,first.firstChild)}rPr.setAttribute('sz',String(opt.pt*100));fitBox(p,doc,opt.box)}if(opt&&/\{\{\s*(song\s*)?title\s*\}\}/i.test(txt))fitTitle(p,doc,out,first,opt);
   const lines=out.split('\n'),ref=first.nextSibling;first.getElementsByTagNameNS(A,'t')[0].textContent=lines[0];
   lines.slice(1).forEach(ln=>{const br=doc.createElementNS(A,'a:br');if(rPr)br.appendChild(rPr.cloneNode(true));const r=first.cloneNode(true);r.getElementsByTagNameNS(A,'t')[0].textContent=ln;p.insertBefore(br,ref);p.insertBefore(r,ref)})});
  let s=new XMLSerializer().serializeToString(doc);if(!/^<\?xml/.test(s))s='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'+s;return s}
@@ -270,7 +272,7 @@ function tplLayout(T,pres,items){const A='http://schemas.openxmlformats.org/draw
  const w=Math.round(cl(w0,.8*W,.84*W)),h=Math.round(Math.min(cl(h0,.52*H,.84*H),Math.max(bot-top,.3*H))),x=Math.round(cl(cx-w/2,.08*W,.92*W-w)),y=Math.round(cl(cy-h/2,top,Math.max(top,bot-h)));
  const u=H/12700/405;   // font sizes scale with slide height (405pt = a 10 x 5.625in slide)
  lastPt=uniformPt(items.map(i=>i.x),w/914400,h/914400,Math.round(46*u),Math.round(18*u),Math.round(30*u));
- return{pt:lastPt,box:{x,y,w,h}}}
+ return{pt:lastPt,box:{x,y,w,h},W,H,u,mx:Math.round(.08*W)}}
 // Moves/resizes the lyrics shape to the safe-area box, zero insets, centred, no auto-shrink (so our size is final).
 function fitBox(p,doc,b){const A='http://schemas.openxmlformats.org/drawingml/2006/main';let sp=p;while(sp&&sp.localName!=='sp')sp=sp.parentNode;if(!sp)return;
  const spPr=[...sp.childNodes].find(n=>n.localName==='spPr');if(spPr){let xf=[...spPr.childNodes].find(n=>n.localName==='xfrm');
@@ -280,6 +282,24 @@ function fitBox(p,doc,b){const A='http://schemas.openxmlformats.org/drawingml/20
  const bp=sp.getElementsByTagNameNS(A,'bodyPr')[0];if(bp){['lIns','rIns','tIns','bIns'].forEach(k=>bp.setAttribute(k,'0'));bp.setAttribute('wrap','square');bp.setAttribute('anchor','ctr');
   [...bp.childNodes].forEach(c=>{if(/Autofit$/.test(c.localName))bp.removeChild(c)});bp.appendChild(doc.createElementNS(A,'a:noAutofit'))}
  let pPr=[...p.childNodes].find(n=>n.localName==='pPr');if(!pPr){pPr=doc.createElementNS(A,'a:pPr');p.insertBefore(pPr,p.firstChild)}pPr.setAttribute('algn','ctr')}
+
+// Keeps {{Song Title}} on ONE line: widens its text box (up to the safe side margins) in the direction of the template's
+// alignment, and only shrinks the font if even the widest box isn't enough.
+function fitTitle(p,doc,text,first,opt){const A='http://schemas.openxmlformats.org/drawingml/2006/main',PN='http://schemas.openxmlformats.org/presentationml/2006/main';
+ let sp=p;while(sp&&sp.localName!=='sp')sp=sp.parentNode;if(!sp)return;
+ const off=sp.getElementsByTagNameNS(A,'off')[0],ext=sp.getElementsByTagNameNS(A,'ext')[0];if(!off||!ext||!ext.getAttribute('cx'))return;
+ const bp=sp.getElementsByTagNameNS(A,'bodyPr')[0],ins=k=>+((bp&&bp.getAttribute(k))||91440);
+ let rPr=first.getElementsByTagNameNS(A,'rPr')[0];
+ const cur=rPr&&rPr.getAttribute('sz')?+rPr.getAttribute('sz')/100:(sp.getElementsByTagNameNS(PN,'ph').length?44:18);
+ const x0=+off.getAttribute('x'),w0=+ext.getAttribute('cx'),pad=ins('lIns')+ins('rIns'),maxW=opt.W-2*opt.mx;
+ let pt=cur,need=textW(text,pt,true)*1.08*12700+pad,wNew=Math.max(w0,need);
+ if(need>maxW){pt=Math.max(Math.floor(cur*(maxW-pad)/(need-pad)),Math.round(10*opt.u));wNew=maxW}
+ if(wNew<=w0&&pt===cur)return;   // already fits on one line in the template's own box
+ const pPr=[...p.childNodes].find(n=>n.localName==='pPr'),al=pPr&&pPr.getAttribute('algn');
+ let x=al==='l'?x0:al==='r'?x0+w0-wNew:x0+(w0-wNew)/2;if(wNew>w0)x=Math.min(Math.max(x,opt.mx),opt.W-opt.mx-wNew);
+ off.setAttribute('x',String(Math.round(x)));ext.setAttribute('cx',String(Math.round(wNew)));
+ if(bp){bp.setAttribute('wrap','square');[...bp.childNodes].forEach(c=>{if(/Autofit$/.test(c.localName))bp.removeChild(c)});bp.appendChild(doc.createElementNS(A,'a:noAutofit'))}
+ if(pt!==cur){if(!rPr){rPr=doc.createElementNS(A,'a:rPr');first.insertBefore(rPr,first.firstChild)}rPr.setAttribute('sz',String(pt*100))}}
 </script>
 <script>// Start-up.
 fillSel();renderAll();renderAddPrev();loadDb();

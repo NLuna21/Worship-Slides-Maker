@@ -14,6 +14,6 @@ $('#expAdd').onclick=()=>{if(!added.length)return say($('#msg'),'You haven’t a
  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'New Songs');save('new-songs.xlsx',XLSX.write(wb,{bookType:'xlsx',type:'array'}))};
 $('#exp').onclick=async()=>{if(tpl)return exportTpl();const pt=setPt();const p=new PptxGenJS(),c=THEMES[theme];p.layout='LAYOUT_16x9';p.title='Worship Slides';
  set.map(find).forEach(s=>secsOf(s).forEach(x=>{const sl=p.addSlide();sl.background={color:c.bg};
-  sl.addText(s.t,{x:SLIDE.mx,y:SLIDE.titleY,w:SLIDE_BODY_W,h:.5,margin:0,fontSize:16,bold:true,color:c.ac,fontFace:'Calibri'});
+  sl.addText(s.t,{x:SLIDE.mx,y:SLIDE.titleY,w:SLIDE_BODY_W,h:.5,margin:0,wrap:false,fontSize:oneLinePt(s.t,SLIDE_BODY_W,16,9),bold:true,color:c.ac,fontFace:'Calibri'});
   sl.addText(x,{x:SLIDE.mx,y:SLIDE.bodyY,w:SLIDE_BODY_W,h:SLIDE.bodyH,margin:0,fit:'shrink',fontSize:pt,color:c.fg,align:'center',valign:'middle',fontFace:'Calibri'})}));
  try{save('Worship-Slides-'+new Date().toISOString().slice(0,10)+'.pptx',await p.write({outputType:'arraybuffer'}))}catch(e){say($('#msg'),'Could not build slides: '+e.message,1)}};
