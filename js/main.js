@@ -1,2 +1,2 @@
 // Start-up.
-fillSel();renderAll();renderAddPrev();loadDb();
+fillSel();renderTpl();renderAll();loadDb();

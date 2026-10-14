@@ -17,6 +17,7 @@ js/events.js       tabs, filters, set editing
 js/add-song.js     add-a-song form
 js/export.js       spreadsheet import/export + built-in PowerPoint export
 js/template.js     custom template engine (slide duplication, auto-fit inside template boxes)
+js/preview.js      draws template slides as HTML (backgrounds, images, fonts, colours) for the live preview
 js/main.js         start-up
 tools/build.py     regenerates the data script and bundles to dist/worship-slide-builder.html
 ```

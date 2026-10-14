@@ -3,8 +3,10 @@
 const idb={open(){return new Promise((ok,no)=>{const r=indexedDB.open('lw',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)})},
  async run(mode,fn){try{const d=await this.open();return await new Promise((ok,no)=>{const t=d.transaction('kv',mode),q=fn(t.objectStore('kv'));t.oncomplete=()=>ok(q&&q.result);t.onerror=()=>no(t.error)})}catch(e){return null}}};
 let tpl=null;
-function renderTpl(){$('#tinfo').textContent=tpl?'Using your template: '+tpl.name:'Built-in design (import a .pptx to use your own)';$('#trm').hidden=!tpl;$('#th').disabled=!!tpl}
-renderTpl();idb.run('readonly',s=>s.get('tpl')).then(v=>{if(v&&v.buf){tpl=v;renderTpl()}});
+const tplVals=(s,x)=>({'song title':s.t,title:s.t,lyrics:x,'songwriter(s)':s.w,songwriter:s.w,songwriters:s.w,writer:s.w,key:s.k});
+function renderTpl(){$('#tinfo').textContent=tpl?'Using your template: '+tpl.name:'Built-in design (import a .pptx to use your own)';$('#trm').hidden=!tpl;$('#thRow').hidden=!!tpl;
+ prepTplPreview().then(()=>{renderPrev();renderAddPrev()});renderPrev();renderAddPrev()}
+idb.run('readonly',s=>s.get('tpl')).then(v=>{if(v&&v.buf){tpl=v;renderTpl()}});
 const rx=s=>s.replace(/[.*+?^$|()\[\]{}\\]/g,'\\$&');
 async function tplScan(zip){const rd=async p=>zip.file(p)?zip.file(p).async('string'):null;
  const pres=await rd('ppt/presentation.xml'),rels=await rd('ppt/_rels/presentation.xml.rels');if(!pres||!rels)throw new Error('not a valid .pptx');
@@ -29,8 +31,8 @@ async function buildFromTpl(items){if(!items.length)throw new Error('your set is
  let n=Math.max(0,...Object.keys(zip.files).map(f=>+((/^ppt\/slides\/slide(\d+)\.xml$/.exec(f)||[])[1]||0)));
  let nid=Math.max(255,...(pres.match(/<p:sldId\b[^>]*>/g)||[]).map(m=>+/ id="(\d+)"/.exec(m)[1]))+1;
  const tags=[],ids=[];let add='',radd='';const opt=$('#afit').checked?tplLayout(T,pres,items):null;
- for(const {s,x} of items){n++;const rid='rIdLW'+n,id=nid++,vals={'song title':s.t,title:s.t,lyrics:x,'songwriter(s)':s.w,songwriter:s.w,songwriters:s.w,writer:s.w,key:s.k};
-  zip.file('ppt/slides/slide'+n+'.xml',fillSlide(T.xml,vals,opt));zip.file('ppt/slides/_rels/slide'+n+'.xml.rels',srels);
+ for(const {s,x} of items){n++;const rid='rIdLW'+n,id=nid++;
+  zip.file('ppt/slides/slide'+n+'.xml',fillSlide(T.xml,tplVals(s,x),opt));zip.file('ppt/slides/_rels/slide'+n+'.xml.rels',srels);
   add+='<Override PartName="/ppt/slides/slide'+n+'.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>';
   radd+='<Relationship Id="'+rid+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide'+n+'.xml"/>';
   tags.push('<p:sldId id="'+id+'" r:id="'+rid+'"/>');ids.push(id)}

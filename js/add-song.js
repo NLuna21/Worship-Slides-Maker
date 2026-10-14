@@ -1,6 +1,7 @@
 // Add-a-song form: live preview, auto-format on paste/blur, save.
 // ---- add song ----
-function renderAddPrev(){const t=$('#nt').value.trim()||'Song title',s=splitLyrics($('#nl').value);$('#acnt').textContent=s.length+' slides';$('#aprev').innerHTML=s.map(x=>slideHtml(t,x)).join('')}
+function renderAddPrev(){const s={t:$('#nt').value.trim()||'Song title',w:$('#nw').value.trim(),k:$('#nk').value.trim()},items=splitLyrics($('#nl').value).map(x=>({s,x}));
+ $('#acnt').textContent=items.length+' slides';if(tpl&&tctxFor!==tpl)return;$('#aprev').innerHTML=deckHtml(items,items).join('')}
 ['#nt','#nl'].forEach(s=>$(s).addEventListener('input',renderAddPrev));
 $('#save').onclick=()=>{const t=$('#nt').value.trim(),secs=splitLyrics($('#nl').value),m=$('#amsg');
  if(!t)return say(m,'Please enter a song title.',1);if(!secs.length)return say(m,'Please paste the lyrics.',1);

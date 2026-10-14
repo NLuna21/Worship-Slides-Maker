@@ -7,53 +7,58 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <link rel="stylesheet" href="css/styles.css">
 </head><body>
-<header><h1>Ligaya Worship Slide Builder</h1><p>Pick songs from the database, add new ones, and download a ready-made PowerPoint — one slide per lyric section.</p></header>
+<header><h1>Ligaya Worship Slide Builder</h1><p>Pick songs, choose a design, check the preview, then download a ready-made PowerPoint — one slide per lyric section.</p></header>
 <main>
-<section>
- <div class="card">
-  <div class="tabs"><button id="tLib" class="on">Song library</button><button id="tAdd">Add a song</button></div>
-  <div id="pLib">
-   <input type="search" id="q" placeholder="Search title, writer or lyrics…" style="margin-bottom:8px">
-   <div class="row"><select id="fs"><option value="">All seasons</option></select><select id="ft"><option value="">All types</option></select></div>
-   <div class="mut" id="cnt" style="margin-bottom:6px;font-size:13px"></div>
-   <div class="list" id="lib"></div>
-   <div class="row" style="margin-top:12px">
-    <label class="mut" style="font-size:13px">Update database from a spreadsheet (same layout as “Song Database”)<input type="file" id="imp" accept=".xlsx" style="margin-top:4px"></label>
-   </div>
+<section class="card">
+ <h2><span><i class="step">1</i>Choose songs</span></h2>
+ <div class="tabs"><button id="tLib" class="on">Song library</button><button id="tAdd">Add a song</button></div>
+ <div id="pLib">
+  <input type="search" id="q" placeholder="Search title, writer or lyrics…" style="margin-bottom:8px">
+  <div class="row"><select id="fs"><option value="">All seasons</option></select><select id="ft"><option value="">All types</option></select></div>
+  <div class="mut" id="cnt" style="margin-bottom:6px;font-size:13px"></div>
+  <div class="list" id="lib"></div>
+  <details class="more"><summary>Manage song database</summary>
+   <label class="mut" style="font-size:13px;display:block;margin-bottom:8px">Update database from a spreadsheet (same layout as “Song Database”)<input type="file" id="imp" accept=".xlsx" style="margin-top:4px;display:block"></label>
    <div class="row"><button id="rst">Reset to original database</button><button id="expAdd">Export my added songs (.xlsx)</button></div>
-  </div>
-  <div id="pAdd" hidden>
-   <div class="row"><input type="text" id="nt" placeholder="Song title *"><input type="text" id="nw" placeholder="Songwriter(s)"></div>
-   <div class="row"><input type="text" id="nk" placeholder="Key (e.g. 07 - Dmin/Fmaj)"><select id="ns"><option value="">Season</option></select><select id="nty"><option value="">Type</option></select></div>
-   <textarea id="nl" placeholder="Paste lyrics here. Separate sections (verse, chorus…) with a blank line. Sections longer than 5 lines are split automatically."></textarea>
-   <p class="mut" style="font-size:12px;margin:6px 0">Lyrics are auto-formatted when you paste or click away: 4–5 lines per slide · no punctuation at the end of a line · first letter of each line capitalized · labels like [Chorus] removed.</p>
-   <label class="ck"><input type="checkbox" id="nadd" checked> Also add to my set after saving</label>
-   <div class="row" style="margin-top:8px"><button class="pri" id="save">Save song</button></div>
-   <div class="msg" id="amsg"></div>
-   <h2 style="margin-top:8px">Slide preview <span class="mut" id="acnt"></span></h2><div class="slides" id="aprev"></div>
-  </div>
+  </details>
+ </div>
+ <div id="pAdd" hidden>
+  <div class="row"><input type="text" id="nt" placeholder="Song title *"><input type="text" id="nw" placeholder="Songwriter(s)"></div>
+  <div class="row"><input type="text" id="nk" placeholder="Key (e.g. 07 - Dmin/Fmaj)"><select id="ns"><option value="">Season</option></select><select id="nty"><option value="">Type</option></select></div>
+  <textarea id="nl" placeholder="Paste lyrics here. Separate sections (verse, chorus…) with a blank line. Sections longer than 5 lines are split automatically."></textarea>
+  <p class="mut" style="font-size:12px;margin:6px 0">Lyrics are auto-formatted when you paste or click away: 4–5 lines per slide · no punctuation at the end of a line · first letter of each line capitalized · labels like [Chorus] removed.</p>
+  <label class="ck"><input type="checkbox" id="nadd" checked> Also add to my set after saving</label>
+  <div class="row" style="margin-top:8px"><button class="pri" id="save">Save song</button></div>
+  <div class="msg" id="amsg"></div>
+  <h3 style="margin-top:8px">Slide preview <span class="mut" id="acnt"></span></h3><div class="slides" id="aprev"></div>
  </div>
 </section>
-<section>
- <div class="card">
-  <h2>My set <span class="mut" id="scnt"></span></h2>
-  <div class="list" id="set" style="max-height:300px"></div>
-  <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--bd)"><b style="font-size:13px">Slide design</b>
-   <div class="mut" id="tinfo" style="font-size:13px;margin:2px 0 6px"></div>
-   <input type="file" id="tfile" accept=".pptx">
-   <label class="ck" style="margin-top:6px"><input type="checkbox" id="afit" checked> Auto-fit lyrics to the slide size (one uniform font size, safe margins)</label>
-   <p class="mut" style="font-size:12px;margin:6px 0">Import a PowerPoint with <code>{{Song Title}}</code> and <code>{{Lyrics}}</code> on one slide. Its backgrounds, images, fonts and colors are kept; your other slides stay in place. The preview below shows text only.</p>
-   <div class="row"><button id="trm" hidden>Remove template</button><button id="tsamp">Get a sample template</button></div></div>
-  <div class="row" style="margin-top:10px">
-   <select id="th"><option value="dark">Dark slides</option><option value="light">Light slides</option></select>
-   <label class="ck"><input type="checkbox" id="fmt" checked> Auto-format lyrics</label>
-  </div>
-  <div class="row"><button id="clr">Clear set</button><button class="pri" id="exp">Download PowerPoint</button></div>
-  <div class="msg" id="msg"></div>
- </div>
- <div class="card"><h2 id="ptitle">Preview</h2><div class="slides" id="prev"></div><p class="mut" id="phint">Click a song title to preview its slides.</p></div>
+
+<section class="card">
+ <h2><span><i class="step">2</i>My set</span><span class="mut" id="scnt"></span></h2>
+ <div class="list" id="set"></div>
+ <div class="row" style="margin:10px 0 0"><button id="clr" style="flex:0 0 auto">Clear set</button></div>
+</section>
+
+<section class="card">
+ <h2><span><i class="step">3</i>Slide design</span></h2>
+ <div class="mut" id="tinfo" style="font-size:13px;margin:0 0 8px"></div>
+ <input type="file" id="tfile" accept=".pptx">
+ <p class="mut" style="font-size:12px;margin:6px 0 8px">Import a PowerPoint with <code>{{Song Title}}</code> and <code>{{Lyrics}}</code> on one slide. Its backgrounds, images, fonts and colors are kept, and the preview below shows them.</p>
+ <div class="row"><button id="trm" hidden>Remove template</button><button id="tsamp">Get a sample template</button></div>
+ <div class="row" id="thRow"><select id="th"><option value="dark">Dark slides</option><option value="light">Light slides</option></select></div>
+ <label class="ck"><input type="checkbox" id="afit" checked> Auto-fit lyrics to the slide size (one uniform font size, safe margins)</label>
+ <label class="ck" style="margin-top:4px"><input type="checkbox" id="fmt" checked> Auto-format lyrics</label>
+</section>
+
+<section class="card" id="pcard">
+ <h2><span><i class="step">4</i>Preview — <span id="ptitle"></span></span><button id="pall" hidden>← Whole set</button></h2>
+ <p class="mut" id="phint">Add songs to your set to see every slide here. Click any song name to preview just that song.</p>
+ <div id="prev"></div>
 </section>
 </main>
+
+<footer class="bar"><div><b>Download</b> <span class="mut" id="bcnt"></span><div class="msg" id="msg"></div></div><button class="pri" id="exp">Download PowerPoint</button></footer>
 
 <script src="js/songs-data.js"></script>
 <script src="js/config.js"></script>
@@ -66,5 +71,6 @@
 <script src="js/add-song.js"></script>
 <script src="js/export.js"></script>
 <script src="js/template.js"></script>
+<script src="js/preview.js"></script>
 <script src="js/main.js"></script>
 </body></html>
